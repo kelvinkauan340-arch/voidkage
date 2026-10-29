@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOIDKAGE.COM | Neon Survival</title>
+<style>
+:root {
+  --bg: #080611;
+  --panel: #120c20;
+  --purple: #a855f7;
+  --cyan: #38e8ff;
+  --text: #f5eaff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at top, #291044, var(--bg) 55%);
+  min-height: 100vh;
+  transition: .3s;
+}
+body.light { --bg:#eee6fa; --panel:#fff; --text:#211332; background:var(--bg); }
+header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:22px 6%; border-bottom:1px solid #ffffff18;
+}
+.logo { font-size:23px; font-weight:900; letter-spacing:-1px; }
+.logo span { color:var(--purple); }
+button {
+  cursor:pointer; padding:12px 18px; border-radius:9px;
+  border:1px solid #69408b; color:var(--text); background:var(--panel);
+}
+button:hover { filter:brightness(1.2); transform:translateY(-1px); }
+.hero { text-align:center; padding:65px 15px 30px; }
+.tag { color:var(--cyan); letter-spacing:4px; font-size:11px; }
+h1 { font-size:clamp(40px,8vw,78px); margin:18px 0; }
+h1 span { color:var(--purple); text-shadow:0 0 30px #a855f777; }
+p { color:#b9a9ce; line-height:1.7; }
+.primary {
+  color:white; border:0; font-weight:bold;
+  background:linear-gradient(110deg,#7c3aed,#c026d3);
+  box-shadow:0 0 25px #a855f733;
+}
+.stats {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:12px; max-width:850px; margin:25px auto; padding:0 15px;
+}
+.stat,.game {
+  background:var(--panel); border:1px solid #54336c;
+  border-radius:13px; padding:17px;
+}
+.stat small { color:#b9a9ce; display:block; margin-bottom:8px; }
+.stat strong { font-size:25px; }
+.game { max-width:850px; margin:20px auto; padding:12px; }
+.gamehead { display:flex; justify-content:space-between; gap:10px; margin-bottom:12px; font-size:12px; }
+.arena { position:relative; background:#06040c; border-radius:9px; overflow:hidden; }
+canvas { display:block; width:100%; height:auto; touch-action:none; }
+.overlay {
+  position:absolute; inset:0; display:flex; align-items:center;
+  justify-content:center; text-align:center; padding:20px;
+  background:#080411cc; backdrop-filter:blur(4px);
+}
+.overlay h2 { font-size:clamp(25px,5vw,40px); }
+.overlay.hidden { display:none; }
+.hud { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.bar { width:150px; height:6px; background:#382443; margin-top:8px; }
+#life { height:100%; width:100%; background:linear-gradient(90deg,var(--purple),var(--cyan)); }
+.controls {
+  display:grid; grid-template-columns:repeat(3,55px);
+  gap:6px; justify-content:center; margin:20px auto;
+}
+.controls button { font-size:20px; touch-action:none; }
+.controls button:nth-child(1) { grid-column:2; }
+.controls button:nth-child(2) { grid-column:1; grid-row:2; }
+.controls button:nth-child(3) { grid-column:2; grid-row:2; }
+.controls button:nth-child(4) { grid-column:3; grid-row:2; }
+section.info { max-width:850px; padding:15px; margin:auto; }
+.features { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.feature { background:var(--panel); border:1px solid #54336c; padding:18px; border-radius:12px; }
+.feature h3 { color:var(--purple); }
+footer { text-align:center; padding:35px 10px; color:#a89abf; font-size:12px; }
+@media(max-width:600px) {
+  .hero { padding-top:45px; }
+  .stats { gap:6px; }
+  .stat { padding:12px 7px; }
+  .stat strong { font-size:19px; }
+  .stat small { font-size:10px; }
+  .features { grid-template-columns:1fr; }
+  .game { margin:12px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">VOIDKAGE<span>.COM</span></div>
+  <button id="theme">☼ Tema</button>
+</header>
+
+<main>
+<section class="hero">
+  <div class="tag">✦ NEXT-GEN ARCADE EXPERIENCE ✦</div>
+  <h1>THE VOID<br>IS <span>CALLING.</span></h1>
+  <p>Entre na arena. Desvie do caos. Colete energia.<br>
+  Descubra quanto tempo você consegue sobreviver.</p>
+  <button class="primary" onclick="startGame()">▶ JOGAR AGORA</button>
+  <button onclick="document.getElementById('instructions').scrollIntoView({behavior:'smooth'})">Como jogar</button>
+</section>
+
+<div class="stats">
+  <div class="stat"><small>SEU RECORDE</small><strong id="best">0000</strong></div>
+  <div class="stat"><small>PONTUAÇÃO</small><strong id="score">0000</strong></div>
+  <div class="stat"><small>TEMPO</small><strong><span id="time">0</span>s</strong></div>
+</div>
+
+<section class="game" id="game">
+  <div class="gamehead">
+    <strong>◈ NEON SURVIVAL</strong>
+    <span>WASD / SETAS PARA MOVER</span>
+  </div>
+  <div class="arena">
+    <canvas id="canvas" width="900" height="506"></canvas>
+    <div class="overlay" id="overlay">
+      <div>
+        <div class="tag">SURVIVAL PROTOCOL 01</div>
+        <h2 id="message">ENTER THE VOID</h2>
+        <p id="description">Colete os cristais cianos e fuja dos inimigos vermelhos.</p>
+        <button class="primary" id="start">INICIAR MISSÃO ↗</button>
+      </div>
+    </div>
+  </div>
+  <div class="hud">
+    <div><small>ENERGIA</small><div class="bar"><div id="life"></div></div></div>
+    <div>
+      <button id="pause">Ⅱ Pausar</button>
+      <button id="sound">♫ Som OFF</button>
+    </div>
+  </div>
+</section>
+
+<div class="controls">
+  <button data-key="up">▲</button>
+  <button data-key="left">◀</button>
+  <button data-key="down">▼</button>
+  <button data-key="right">▶</button>
+</div>
+
+<section class="info" id="instructions">
+  <h2>PROTOCOLO DE SOBREVIVÊNCIA</h2>
+  <div class="features">
+    <article class="feature"><h3>⌘ Movimente-se</h3><p>Use as setas, WASD ou os controles de toque para escapar.</p></article>
+    <article class="feature"><h3>✧ Colete energia</h3><p>Recolha os cristais brilhantes para aumentar sua pontuação.</p></article>
+    <article class="feature"><h3>◈ Sobreviva</h3><p>Evite os inimigos. Quanto mais tempo passar, mais difícil será.</p></article>
+  </div>
+</section>
+</main>
+<footer>VOIDKAGE.COM © <span id="year"></span> — BUILT FOR THE VOID.</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
+const W = canvas.width, H = canvas.height;
+const keys = new Set();
+let state = "ready", score = 0, time = 0, health = 100;
+let best = 0, enemyClock = 0, crystalClock = 0, invincible = 0;
+let last = performance.now(), soundOn = false, audio;
+try { best = Number(localStorage.getItem("voidkage-record")) || 0; } catch(e) {}
+$("best").textContent = String(best).padStart(4,"0");
+$("year").textContent = new Date().getFullYear();
+
+const player = {x:W/2,y:H/2,r:12,speed:245};
+let enemies = [], crystals = [], particles = [];
+const stars = Array.from({length:100},()=>({
+  x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3
+}));
+
+function startGame() {
+  score=0; time=0; health=100;
+  enemyClock=.5; crystalClock=.4; invincible=1;
+  enemies=[]; crystals=[]; particles=[];
+  player.x=W/2; player.y=H/2;
+  state="playing";
+  $("overlay").classList.add("hidden");
+  $("pause").textContent="Ⅱ Pausar";
+  last=performance.now();
+  if(soundOn) initSound();
+}
+$("start").onclick=startGame;
+$("start").addEventListener("click",()=>{});
+$("pause").onclick=()=>{
+  if(state==="playing") {
+    state="paused";
+    showOverlay("JOGO PAUSADO","Continue quando estiver pronto.","▶ CONTINUAR");
+    $("pause").textContent="▶ Continuar";
+  } else if(state==="paused") {
+    state="playing"; $("overlay").classList.add("hidden");
+    $("pause").textContent="Ⅱ Pausar"; last=performance.now();
+  } else startGame();
+};
+function showOverlay(title,desc,button) {
+  $("message").textContent=title;
+  $("description").textContent=desc;
+  $("start").textContent=button;
+  $("overlay").classList.remove("hidden");
+}
+$("theme").onclick=()=>{
+  document.body.classList.toggle("light");
+  $("theme").textContent=document.body.classList.contains("light")?"☾ Tema":"☼ Tema";
+};
+$("sound").onclick=()=>{
+  soundOn=!soundOn;
+  $("sound").textContent=soundOn?"♫ Som ON":"♫ Som OFF";
+  if(soundOn) {initSound();beep(500,.1);}
+};
+function initSound() {
+  try {
+    if(!audio) audio=new (window.AudioContext||window.webkitAudioContext)();
+    if(audio.state==="suspended") audio.resume();
+  } catch(e) {}
+}
+function beep(freq=500,duration=.07) {
+  if(!soundOn||!audio)return;
+  try {
+    const o=audio.createOscillator(),g=audio.createGain();
+    o.frequency.value=freq;g.gain.value=.035;
+    g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+    o.connect(g);g.connect(audio.destination);
+    o.start();o.stop(audio.currentTime+duration);
+  } catch(e){}
+}
+function burst(x,y,color) {
+  for(let i=0;i<12;i++) {
+    const a=Math.random()*Math.PI*2,s=30+Math.random()*130;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.6,color});
+  }
+}
+function spawnEnemy() {
+  const side=Math.floor(Math.random()*4);
+  let x,y;
+  if(side===0){x=Math.random()*W;y=-15}
+  if(side===1){x=W+15;y=Math.random()*H}
+  if(side===2){x=Math.random()*W;y=H+15}
+  if(side===3){x=-15;y=Math.random()*H}
+  enemies.push({x,y,r:9+Math.random()*4,speed:55+Math.min(time*2,100)});
+}
+function spawnCrystal() {
+  crystals.push({x:30+Math.random()*(W-60),y:30+Math.random()*(H-60),r:7,phase:0});
+}
+function hit(a,b) {return Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r}
+function update(dt) {
+  if(state!=="playing")return;
+  time+=dt; invincible=Math.max(0,invincible-dt);
+  let dx=0,dy=0;
+  if(keys.has("ArrowLeft")||keys.has("a")||keys.has("left"))dx--;
+  if(keys.has("ArrowRight")||keys.has("d")||keys.has("right"))dx++;
+  if(keys.has("ArrowUp")||keys.has("w")||keys.has("up"))dy--;
+  if(keys.has("ArrowDown")||keys.has("s")||keys.has("down"))dy++;
+  if(dx&&dy){dx*=.707;dy*=.707;}
+  player.x=Math.max(player.r,Math.min(W-player.r,player.x+dx*player.speed*dt));
+  player.y=Math.max(player.r,Math.min(H-player.r,player.y+dy*player.speed*dt));
+
+  enemyClock-=dt;
+  if(enemyClock<=0){spawnEnemy();enemyClock=Math.max(.22,.9-time*.008);}
+  crystalClock-=dt;
+  if(crystalClock<=0&&crystals.length<5){spawnCrystal();crystalClock=1.4;}
+
+  enemies.forEach(e=>{
+    const a=Math.atan2(player.y-e.y,player.x-e.x);
+    e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;
+    if(invincible<=0&&hit(player,e)) {
+      health-=22;invincible=.8;
+      burst(player.x,player.y,"#ff386d");beep(140,.15);
+      if(health<=0)endGame();
+    }
+  });
+  enemies=enemies.filter(e=>e.x>-50&&e.x<W+50&&e.y>-50&&e.y<H+50);
+
+  crystals=crystals.filter(c=>{
+    c.phase+=dt*3;
+    if(hit(player,c)){
+      score+=100;health=Math.min(100,health+7);
+      burst(c.x,c.y,"#38e8ff");beep(700,.08);return false;
+    }
+    return true;
+  });
+  score+=dt*5;
+  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;});
+  particles=particles.filter(p=>p.life>0);
+  $("score").textContent=String(Math.floor(score)).padStart(4,"0");
+  $("time").textContent=Math.floor(time);
+  $("life").style.width=Math.max(0,health)+"%";
+}
+function endGame() {
+  health=0;state="over";
+  if(score>best) {
+    best=Math.floor(score);
+    try{localStorage.setItem("voidkage-record",best)}catch(e){}
+    $("best").textContent=String(best).padStart(4,"0");
+  }
+  showOverlay("FIM DE JOGO",`Você marcou ${Math.floor(score)} pontos e sobreviveu por ${Math.floor(time)} segundos.`,"↻ JOGAR NOVAMENTE");
+}
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#080510";ctx.fillRect(0,0,W,H);
+  const bg=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*.7);
+  bg.addColorStop(0,"#241039");bg.addColorStop(1,"#080510");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle="#ffffff55";
+  stars.forEach(s=>ctx.fillRect(s.x,s.y,s.r,s.r));
+  ctx.strokeStyle="#a855f719";
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  crystals.forEach(c=>{
+    ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.phase);
+    ctx.shadowBlur=20;ctx.shadowColor="#38e8ff";ctx.fillStyle="#38e8ff";
+    ctx.beginPath();ctx.moveTo(0,-c.r);ctx.lineTo(c.r,0);
+    ctx.lineTo(0,c.r);ctx.lineTo(-c.r,0);ctx.fill();ctx.restore();
+  });
+  enemies.forEach(e=>{
+    ctx.save();ctx.shadowBlur=20;ctx.shadowColor="#ff386d";
+    ctx.strokeStyle="#ff386d";ctx.fillStyle="#481029";ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.restore();
+  });
+  particles.forEach(p=>{
+    ctx.globalAlpha=Math.max(0,p.life/.6);
+    ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,3,3);
+  });
+  ctx.globalAlpha=1;
+  if(!(invincible>0&&Math.floor(performance.now()/80)%2===0)) {
+    ctx.save();ctx.translate(player.x,player.y);ctx.rotate(time);
+    ctx.shadowBlur=25;ctx.shadowColor="#a855f7";
+    ctx.fillStyle="#7c3aed";ctx.strokeStyle="#e9d5ff";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(13,0);
+    ctx.lineTo(0,18);ctx.lineTo(-13,0);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.restore();
+  }
+}
+function frame(now) {
+  const dt=Math.min((now-last)/1000||0,.04);
+  last=now;update(dt);draw();requestAnimationFrame(frame);
+}
+window.addEventListener("keydown",e=>{
+  const k=e.key.length===1?e.key.toLowerCase():e.key;
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(k))e.preventDefault();
+  keys.add(k);
+  if(k==="Escape"||k==="p")$("pause").click();
+});
+window.addEventListener("keyup",e=>{
+  keys.delete(e.key.length===1?e.key.toLowerCase():e.key);
+});
+window.addEventListener("blur",()=>{
+  keys.clear();
+  if(state==="playing")$("pause").click();
+});
+document.querySelectorAll("[data-key]").forEach(btn=>{
+  const k=btn.dataset.key;
+  btn.addEventListener("pointerdown",e=>{e.preventDefault();keys.add(k);btn.setPointerCapture(e.pointerId);});
+  const release=()=>keys.delete(k);
+  btn.addEventListener("pointerup",release);
+  btn.addEventListener("pointercancel",release);
+  btn.addEventListener("lostpointercapture",release);
+});
+requestAnimationFrame(now=>{last=now;requestAnimationFrame(frame);});
+</script>
+</body>
+</html>
